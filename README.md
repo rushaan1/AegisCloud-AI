@@ -1,13 +1,13 @@
-# AegisCloud-AI
+# AegisCloud AI
 
 <div align="center">
 
-![AegisCloud-AI](https://img.shields.io/badge/Platform-AegisCloud--AI-blue)
+![AegisCloud AI](https://img.shields.io/badge/Platform-Cloud%20Storage-blue)
 ![.NET](https://img.shields.io/badge/.NET-6.0-purple)
 ![Angular](https://img.shields.io/badge/Angular-18-red)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-**A modern, full-featured cloud storage platform with advanced file management, real-time synchronization, and AI-powered enhancements.**
+**A modern, cozy full-featured cloud storage platform with advanced file management, real-time synchronization, and AI-powered enhancements.**
 
 [Features](#features) • [Tech Stack](#tech-stack) • [Getting Started](#getting-started) • [API Documentation](#api-documentation) • [Deployment](#deployment)
 
@@ -32,7 +32,7 @@
 
 ## 🎯 Overview
 
-AegisCloud-AI is a comprehensive, enterprise-grade cloud storage solution built with modern web technologies. It provides secure file storage, advanced file management capabilities, real-time synchronization, and AI-powered features to enhance user productivity.
+AegisCloud AI is a comprehensive, enterprise-grade cloud storage solution built with modern web technologies. It provides secure file storage, advanced file management capabilities, real-time synchronization, and AI-powered features to enhance user productivity.
 
 ### Key Highlights
 
@@ -78,7 +78,7 @@ AegisCloud-AI is a comprehensive, enterprise-grade cloud storage solution built 
 
 - **🖼️ Media Features**
   - Automatic thumbnail generation for images and videos
-  - In-browser media preview (images, videos, audio)
+  - In-browser media preview (images, videos, audio, PDF etc)
   - PDF viewer integration
   - Video thumbnail extraction with FFmpeg
 
@@ -86,6 +86,8 @@ AegisCloud-AI is a comprehensive, enterprise-grade cloud storage solution built 
   - Image upscaling using Google Cloud AI Platform (Imagen 4.0)
   - Background processing with RAM optimization
   - Automatic quality enhancement
+  - File-based prompting (in progress — API/UX may change)
+  - AI-based search (in development)
 
 - **📈 Analytics & Insights**
   - Storage usage tracking and visualization
@@ -203,7 +205,7 @@ AegisCloud-AI/
 #### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/aegiscloud-ai.git
+git clone https://github.com/rushaan1/aegiscloud-ai.git
 cd aegiscloud-ai
 ```
 
