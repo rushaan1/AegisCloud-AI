@@ -511,8 +511,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions, issues, or contributions:
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/aegiscloud-ai/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/aegiscloud-ai/discussions)
+- **Issues**: [GitHub Issues](https://github.com/rushaan1/aegiscloud-ai/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/rushaan1/aegiscloud-ai/discussions)
 
 ---
 
