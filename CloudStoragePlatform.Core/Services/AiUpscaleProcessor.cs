@@ -12,6 +12,10 @@ using System.Threading.Tasks;
 using CloudStoragePlatform.Core.ServiceContracts;
 using Microsoft.Extensions.DependencyInjection;
 using CloudStoragePlatform.Core.Domain.IdentityEntites;
+using CloudStoragePlatform.Core.Domain.RepositoryContracts;
+using CloudStoragePlatform.Core.DTO;
+using CloudStoragePlatform.Core.Domain.Entities;
+using File = CloudStoragePlatform.Core.Domain.Entities.File;
 
 namespace CloudStoragePlatform.Core.Services
 {
@@ -20,17 +24,30 @@ namespace CloudStoragePlatform.Core.Services
         private readonly IConfiguration _config;
         private readonly IServiceProvider _provider;
         private readonly UserIdentification userIdentification;
+        private readonly IFilesRetrievalService _filesRetrievalService;
 
-        public AiUpscaleProcessor(IConfiguration config, IServiceProvider serviceProvider, UserIdentification userIdentification)
+        public AiUpscaleProcessor(IConfiguration config, IServiceProvider serviceProvider, UserIdentification userIdentification, IFilesRetrievalService filesRetrievalService)
         {
             _config = config;
             _provider = serviceProvider;
             this.userIdentification = userIdentification;
+            _filesRetrievalService = filesRetrievalService;
         }
 
         public async Task UpscaleDefault(Guid id)
         {
-            string path = @"C:\Users\rusha\OneDrive\Pictures\who.png";
+            // Get file using retrieval service
+            var fileResponse = await _filesRetrievalService.GetFileByFileId(id);
+            if (fileResponse == null)
+            {
+                throw new ArgumentException("File not found");
+            }
+
+            // Get physical storage path from user identification
+            string physicalStoragePath = userIdentification.PhysicalStoragePath;
+            
+            // Concatenate physical storage path and file id to get finalPath
+            string finalPath = Path.Combine(physicalStoragePath, id.ToString());
 
             // TODO move these details to config
             string projectID = "cloud-storage-platform-rushaan";
@@ -38,22 +55,51 @@ namespace CloudStoragePlatform.Core.Services
             string publisher = "google";
             string model = "imagen-4.0-upscale-preview";
 
-            Func<Task> upscaleJob = async () => 
-            {
-                await UpscaleImageAsync(Convert.ToBase64String(File.ReadAllBytes(path)), projectID, region, publisher, model);
-            };
-
             ApplicationUser usr = userIdentification.User!;
 
-            _= Task.Run(async () =>
+            Func<Task> upscaleJob = async () => 
             {
                 using var scope = _provider.CreateScope();
                 IFilesModificationService fms = scope.ServiceProvider.GetRequiredService<IFilesModificationService>();
+                IFilesRepository filesRepository = scope.ServiceProvider.GetRequiredService<IFilesRepository>();
                 UserIdentification usrIdentification = scope.ServiceProvider.GetRequiredService<UserIdentification>();
                 usrIdentification.User = usr;
+
+                // Get file entity to access ParentFolder
+                File? fileEntity = await filesRepository.GetFileByFileId(id);
+                Folder? parent = fileEntity?.ParentFolder;
+                if (fileEntity == null || parent == null)
+                {
+                    throw new ArgumentException("File or parent folder not found");
+                }
+
+                // Read original file and upscale
+                byte[] originalBytes = await System.IO.File.ReadAllBytesAsync(finalPath);
+                string b64Original = Convert.ToBase64String(originalBytes);
+                byte[] upscaledBytes = await UpscaleImageAsyncInternal(b64Original, projectID, region, publisher, model);
+
+                // Create new file with "Upscaled " prefix
+                string upscaledFileName = "UHQ " + fileEntity.FileName;
+                upscaledFileName = Utilities.FindUniqueName(parent.Files.Select(f=>f.FileName).ToArray(), upscaledFileName, true);
+                string parentFolderPath = parent.FolderPath;
+                string upscaledFilePath = Path.Combine(parentFolderPath, upscaledFileName);
+
+                // Create FileAddRequest
+                var fileAddRequest = new FileAddRequest
+                {
+                    FileName = upscaledFileName,
+                    FilePath = upscaledFilePath
+                };
+
+                // Upload the upscaled file
+                using var upscaledStream = new MemoryStream(upscaledBytes);
+                await fms.UploadFile(fileAddRequest, upscaledStream);
+            };
+
+            _= Task.Run(async () =>
+            {
                 await MinRamThreshold.WaitForRamOrTimeoutAsync(upscaleJob);
             });
-            
 
             // TODO most likely handle API ops in this fn
             // TODO since most AI features will need ram optimisation and background jobs, wise to have a singleton background orchestrator service for the same instead of repeating background & scope logic
@@ -61,6 +107,11 @@ namespace CloudStoragePlatform.Core.Services
 
 
         public async Task UpscaleImageAsync(string b64, string projectId, string location, string publisher, string modelName)
+        {
+            await UpscaleImageAsyncInternal(b64, projectId, location, publisher, modelName);
+        }
+
+        private async Task<byte[]> UpscaleImageAsyncInternal(string b64, string projectId, string location, string publisher, string modelName)
         {
             string base64 = _config["GoogleServiceAccountJsonKey"];
             string saJson = Encoding.UTF8.GetString(Convert.FromBase64String(base64));
@@ -110,7 +161,9 @@ namespace CloudStoragePlatform.Core.Services
                 .GetProperty("predictions")[0]
                 .GetProperty("bytesBase64Encoded")
                 .GetString();
-            File.WriteAllBytes("C:\\Users\\rusha\\OneDrive\\Pictures\\chheese", Convert.FromBase64String(b64_upscaled));
+            
+            // Return upscaled bytes instead of writing to file
+            return Convert.FromBase64String(b64_upscaled);
         }
 
         private string BuildRequestJson(string b64, int count = 1, string factor = "x2") 

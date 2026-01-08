@@ -262,9 +262,9 @@ namespace Cloud_Storage_Platform.Controllers
         [HttpPost]
         [Route("UpscaleTest")]
         [AllowAnonymous]
-        public async Task<IActionResult> UpscaleTest()
+        public async Task<IActionResult> UpscaleTest(Guid id)
         {
-            await _aiUpscaleProcessor.UpscaleDefault();
+            await _aiUpscaleProcessor.UpscaleDefault(id);
             return Ok();
         }
 
